@@ -1,190 +1,224 @@
-# desafio-backend-05-pdv
-![](https://i.imgur.com/xG74tOh.png)
+# **SISTEMA PDV**
 
-# Desafio Módulo 5 - Backend
-
-Seja bem vindo(a) ao desafio do módulo 5.
-
-Sua tarefa como desenvolvedor(a) será criar uma API para um PDV (Frente de Caixa). Esse será um projeto piloto, ou seja, no futuro outras funcionalidades serão implementadas.
+<p>É um sistema de ponto de vendas, onde o cliente consegue realizar cadastros de produtos, suas respectivas categorias, além de excluir ou atualizar esses registros, ações que só poderão ser realizadas por meio de um login de usuário autenticado, para preservar a segurança e integridade dos dados e das vendas realizadas.</p>
 
 
-**Importante 1: Sempre que a validação de uma requisição falhar, responda com código de erro e mensagem adequada à situação, ok?**
+## **Índice**
 
-**Importante 2: Para endpoints de cadastro/atualização os objetos de requisição devem conter as propriedades equivalentes as colunas das tabelas.**
+* <a href="tecnologias">Tecnologias e ferramentas utilizadas</a>
+* <a href="funcionalidades">Funcionalidades</a>
+* <a href="demonstracao">Demonstração</a>
+* <a href="testes">Testes realizados</a>
+* <a href="autores">Autores</a>
+____
 
-**Exemplo:**
+## **Tecnologias e ferramentas utilizadas:**
 
-```javascript
-// Corpo da requisição para cadastro de usuário (body)
-{
-    "nome": "José",
-    "email": "jose@email.com",
-    "senha": "jose"
+* [Javascript](https://developer.mozilla.org/pt-BR/docs/web/javascript/guide/introduction)
+* [Node.js](https://nodejs.org/docs/latest-v18.x/api/)
+* [Express](https://expressjs.com/en/5x/api.html)
+* [Nodemon](https://www.npmjs.com/package/nodemon)
+* [Axios](https://www.npmjs.com/package/nodemon) 
+* [Bcrypt](https://www.npmjs.com/package/bcrypt)
+* [Cors](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/CORS)
+* [Dotenv](https://www.npmjs.com/package/dotenv)
+* [Joi](https://www.npmjs.com/package/joi)
+* [JsonWebToken](https://jwt.io/introduction)
+* [Knex](https://www.npmjs.com/package/knex)
+* [Pg](https://www.npmjs.com/package/pg)
+
+___
+
+## **Funcionalidades**
+
+* [x] <a href="cadastro">Cadastrar usuário</a>
+* [x] <a href="login">Login de usuário</a>
+* [x] <a href="perfil">Buscar perfil do usuário</a>
+* [x] <a href="atualizar">Atualizar usuário</a>
+* [x] <a href= "listarCategoria">Listar categorias</a>
+___
+
+## **Demonstração**
+[Link deploy]()
+
+__
+
+## **Testes realizados**
+
+### Cadastrar usuário
+
+```bash
+
+const cadastrarUsuario = async (req, res) => {
+    const { nome, email, senha } = req.body
+    try {
+        const emailJaExiste = await knex('usuarios').where({ email }).first()
+        if (emailJaExiste) {
+            return res.status(400).json({ mensagem: 'Este email já está cadastrado.' })
+        }
+        const senhaCriptografada = await bcrypt.hash(senha, 10)
+
+        const novoUsuario = await knex('usuarios').insert({
+            nome,
+            email,
+            senha: senhaCriptografada
+        }).returning('*')
+
+        if (!novoUsuario) {
+            return res.status(400).json({ mensagem: 'Não foi possível cadastrar o usuário, tente novamente.' })
+        }
+
+        const { senha: _, ...dadosUsuario } = novoUsuario[0]
+
+        return res.status(201).json(dadosUsuario)
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            mensagem: 'Erro interno do servidor.'
+        })
+    }
+
+};
+```
+Sucesso:
+![cadastro](./src//assets//cadastroUsuario.jpg)
+
+Erro:
+![ErroCadastro](./src//assets//ErroCadastro.jpg)
+___
+
+### Login de usuário
+
+```bash
+const loginUsuario = async (req, res) => {
+    const {email, senha} = req.body;
+    
+    try {
+        const usuario = await knex('usuarios').where({ email }).first()
+        
+        
+        if(!usuario){
+            return res.status(400).json({
+                mensagem: 'Email ou senha inválido.'
+            })
+        }
+
+        const senhaValida = await bcrypt.compare(senha, usuario.senha);
+
+        if(!senhaValida){
+            return res.status(400).json({
+                mensagem: 'Email ou senha inválido.'
+            })
+        }
+
+        const token = jwt.sign({id: usuario.id}, process.env.JWT_SENHA, {expiresIn: '8h'})
+
+        const {senha: _, ...usuarioLogado} = usuario
+        
+        return res.json({
+            usuario: usuarioLogado, token
+        })
+    } catch (error) {
+        console.log(error)
+        return res.status(500)
+        .json({
+            mensagem: 'Erro interno do servidor.'
+        })
+        
+    }
+};
+```
+Sucesso:
+![login](./src//assets//loginUsuario.jpg)
+
+Erro:
+![ErroLogin](./src//assets//ErroLogin.jpg)
+___
+
+### Buscar perfil do usuário
+
+```bash 
+const detalharPerfilUsuarioLogado = async (req, res) => {
+    return res.json(req.usuario);
 }
 ```
+Sucesso:
+![perfil](./src//assets//perfilUsuario.jpg)
 
-**ATENÇÃO: Todos os endpoints deverão atender os requisitos citados acima.**
+Erro:
+![ErroPerfil](./src//assets//ErroPerfil.jpg)
+___
 
-## **Banco de dados**
+### Atualizar usuário
 
-Você precisa criar um Banco de Dados PostgreSQL chamado `pdv`.
+```bash 
+const editarUsuario = async (req, res) => {
+    const { nome, email, senha } = req.body
+    const { id } = req.usuario
 
-**IMPORTANTE: Deverá ser criado no projeto o arquivo SQL que deverá ser o script contendo os comandos de criação das tabelas respeitando os nomes das tabelas e colunas respectivamente, além de, conter os comandos para a inserção das categorias que devem ser previamente cadastradas (estão citadas na 1ª Sprint no item Listar Categorias).**
+    try {
+        const emailJaExiste = await knex('usuarios').where({ email }).andWhere('id', '!=', id).first()
 
-## **Requisitos obrigatórios**
+        if (emailJaExiste) {
+            return res.status(400).json({ mensagem: "Este email ja existe no banco de dados" })
+        }
 
--   A API a ser criada deverá acessar o banco de dados a ser criado `pdv` para persistir e manipular os dados de categorias, clientes, pedidos, produtos e usuários utilizados pela aplicação.
--   O campo id das tabelas no banco de dados deve ser auto incremento, chave primária e não deve permitir edição uma vez criado.
--   Qualquer valor monetário deverá ser representado em centavos (Ex.: R$ 10,00 reais = 1000)
+        const senhaCriptografada = await bcrypt.hash(senha, 10)
 
-## **Status Codes**
+        const usuarioEditado = await knex('usuarios').update({ nome, email, senha: senhaCriptografada }).where({id}).returning(['id', 'nome', 'email'])
 
-Abaixo, listamos os possíveis **_status codes_** esperados como resposta da API.
+        if (!usuarioEditado[0]) {
+            return res.status(400).json({ mensagem: "Não foi possível atualizar o usuário" })
+        }
 
-```javascript
-// 200 (OK) = requisição bem sucedida
-// 201 (Created) = requisição bem sucedida e algo foi criado
-// 204 (No Content) = requisição bem sucedida, sem conteúdo no corpo da resposta
-// 400 (Bad Request) = o servidor não entendeu a requisição pois está com uma sintaxe/formato inválido
-// 401 (Unauthorized) = o usuário não está autenticado (logado)
-// 403 (Forbidden) = o usuário não tem permissão de acessar o recurso solicitado
-// 404 (Not Found) = o servidor não pode encontrar o recurso solicitado
-// 500 (Internal Server Error) = erro inesperado do servidor
+        return res.status(200).json({ atuliazadoComSucesso: usuarioEditado[0] })
+
+    }
+
+    catch (error) {
+        console.log(error)
+        return res.status(500).json({ mensagem: "Erro interno do servidor" })
+    }
+}
 ```
+Sucesso:
+![atualizar](./src//assets//atualizarUsuario.jpg)
 
-<details>
-<summary>1ª Sprint</summary>
-<br>
+Erro:
+![ErroAtualizar](./src//assets//ErroAtualizar.jpg)
 
-<details>
-<summary><b>Banco de Dados</b></summary>
-<br>
+___
 
-Crie as seguintes tabelas e colunas abaixo: 
+### Listar categorias
 
-**ATENÇÃO! Os nomes das tabelas e das colunas a serem criados devem seguir exatamente os nomes listados abaixo.**
+```bash 
+const listarCategorias = async (req, res) => {
 
--   usuarios
-    -   id
-    -   nome
-    -   email (campo único)
-    -   senha
--   categorias
-    -   id
-    -   descricao
+  try {
+    const categorias = await knex('categorias')
 
-</details>
+    if (!categorias) {
+      return res.status(404).json({ mensagem: 'Categorias nao encontradas' })
+    }
+    
+    return res.status(200).json(categorias) 
+  } catch(error) {
+    console.log(error)
+    return res.status(500).json({ mensagem: 'Erro interno do servidor' })
+  }
+}
+```
+Sucesso:
+![listarCategorias](./src//assets//listarCategorias.jpg)
 
-<details>
-<summary><b>Listar categorias</b></summary>
+Erro:
+![erroCategorias](./src//assets//ErroListarCategoria.jpg)
+___
 
-#### `GET` `/categoria`
+## **Autores**
+- [Igor André](https://www.linkedin.com/in/igor-padua/)
+- [Helingston Pereira](https://www.linkedin.com/in/helingston/)
+- [Michael Cruz](https://www.linkedin.com/in/michael-vpcruz/)
+- [Victor Freitas](https://www.linkedin.com/in/victor-freitas-5986a333/)
+- [Vinícius Gomes](https://www.linkedin.com/in/vini-gomes/)
 
-Essa é a rota que será chamada quando o usuário quiser listar todas as categorias cadastradas.
-
-As categorias a seguir precisam ser previamente cadastradas para que sejam listadas no endpoint de listagem das categorias.
-
-## **Categorias**
-
--   Informática
--   Celulares
--   Beleza e Perfumaria
--   Mercado
--   Livros e Papelaria
--   Brinquedos
--   Moda
--   Bebê
--   Games
-
-</details>
-
-<details>
-<summary><b>Cadastrar usuário</b></summary>
-
-#### `POST` `/usuario`
-
-Essa é a rota que será utilizada para cadastrar um novo usuário no sistema.
-
-Critérios de aceite:
-
-    - Validar os campos obrigatórios: 
-        - nome
-        - email
-        - senha
-    - A senha deve ser criptografada utilizando algum algoritmo de criptografia confiável.
-    - O campo e-mail no banco de dados deve ser único para cada registro, não permitindo dois usuários possuírem o mesmo e-mail.
-
-</details>
-
-<details>
-<summary><b>Efetuar login do usuário</b></summary>
-
-#### `POST` `/login`
-
-Essa é a rota que permite o usuário cadastrado realizar o login no sistema.
-
-Critérios de aceite:
-
-    - Validar se o e-mail e a senha estão corretos para o usuário em questão.
-    - Gerar um token de autenticação para o usuário.
-
-</details>
-
----
-
-## **ATENÇÃO**: Todas as funcionalidades (endpoints) a seguir, a partir desse ponto, deverão exigir o token de autenticação do usuário logado, recebendo no header com o formato Bearer Token. Portanto, em cada funcionalidade será necessário validar o token informado.
-
----
-
-<details>
-<summary><b>Detalhar perfil do usuário logado</b></summary>
-
-#### `GET` `/usuario`
-
-Essa é a rota que permite o usuário logado a visualizar os dados do seu próprio perfil, de acordo com a validação do token de autenticação.
-
-</details>
-
-<details>
-<summary><b>Editar perfil do usuário logado</b></summary>
-
-#### `PUT` `/usuario`
-
-Essa é a rota que permite o usuário logado atualizar informações de seu próprio cadastro, de acordo com a validação do token de autenticação.
-
-Critérios de aceite:
-
-    - Validar os campos obrigatórios: 
-        - nome
-        - email
-        - senha
-    - A senha deve ser criptografada utilizando algum algoritmo de criptografia confiável.
-    - O campo e-mail no banco de dados deve ser único para cada registro, não permitindo dois usuários possuírem o mesmo e-mail.
-
-</details>
-
-<details>
-<summary><b>Efetuar deploy da aplicação</b></summary>
-<br>
-
-Fazer deploy do projeto e disponibilizar a URL.
-
-</details>
-
-</details>
-
----
-
-
-## Aulas úteis:
-
--   [Revisão pt1](https://aulas.cubos.academy/turma/1e4b0f04-1795-4b02-a19f-83e221b2ba4e/aulas/e4e0b794-91a2-42a3-9a03-137c20fcb350)
--   [Revisão pt2](https://aulas.cubos.academy/turma/1e4b0f04-1795-4b02-a19f-83e221b2ba4e/aulas/0648b3e8-55cb-4bf8-b425-00e9b213fd00)
--   [Git e fluxo de trabalho em equipe](https://aulas.cubos.academy/turma/1e4b0f04-1795-4b02-a19f-83e221b2ba4e/aulas/cd27aa06-f5d2-4448-9cac-48b563f6117d)
--   [Deploy](https://aulas.cubos.academy/turma/1e4b0f04-1795-4b02-a19f-83e221b2ba4e/aulas/f3cb34a7-8e87-4ea1-830e-ef089f851aa6)
--   [Envio de e-mails](https://aulas.cubos.academy/turma/1e4b0f04-1795-4b02-a19f-83e221b2ba4e/aulas/f5d73a28-cce3-429c-9488-51b453f20e37)
--   [Validações e boas práticas](https://aulas.cubos.academy/turma/1e4b0f04-1795-4b02-a19f-83e221b2ba4e/aulas/150b1f0b-735f-413b-870f-864ecae8a8bc)
--   [Upload de arquivos](https://aulas.cubos.academy/turma/1e4b0f04-1795-4b02-a19f-83e221b2ba4e/aulas/ad6993d5-c47d-4971-a86f-c7e41a93b6cd)
-
-
-###### tags: `back-end` `módulo 5` `nodeJS` `PostgreSQL` `API REST` `desafio`
