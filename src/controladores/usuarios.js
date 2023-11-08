@@ -14,15 +14,13 @@ const cadastrarUsuario = async (req, res) => {
             nome,
             email,
             senha: senhaCriptografada
-        }).returning('*')
+        }).returning(['nome', 'email'])
 
-        if (!novoUsuario) {
+        if (!novoUsuario[0]) {
             return res.status(400).json({ mensagem: 'Não foi possível cadastrar o usuário, tente novamente.' })
         }
 
-        const { senha: _, ...dadosUsuario } = novoUsuario[0]
-
-        return res.status(201).json(dadosUsuario)
+        return res.status(201).json(novoUsuario[0])
     } catch (error) {
         console.log(error);
         return res.status(500).json({
@@ -49,7 +47,7 @@ const editarUsuario = async (req, res) => {
 
         const senhaCriptografada = await bcrypt.hash(senha, 10)
 
-        const usuarioEditado = await knex('usuarios').update({ nome, email, senha: senhaCriptografada }).where({id}).returning(['id', 'nome', 'email'])
+        const usuarioEditado = await knex('usuarios').update({ nome, email, senha: senhaCriptografada }).where({ id }).returning(['id', 'nome', 'email'])
 
         if (!usuarioEditado[0]) {
             return res.status(400).json({ mensagem: "Não foi possível atualizar o usuário" })
