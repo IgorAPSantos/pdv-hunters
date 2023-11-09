@@ -1,5 +1,8 @@
 create database pdv;
 
+drop table if exists usuarios;
+drop table if exists categorias;
+
 create table usuarios(
   id serial primary key,
   nome text not null,
