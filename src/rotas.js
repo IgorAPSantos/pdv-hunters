@@ -9,11 +9,12 @@ const loginSchema = require('./validacoes/loginSchema')
 const loginUsuario = require('./controladores/login')
 const verificarUsuarioLogado = require('./intermediarios/validarUsuarioLogado')
 
+
+rota.get('/categoria', listarCategorias)
 rota.post('/usuario', validarRequisicao(usuarioSchema), cadastrarUsuario)
 rota.post('/login', validarRequisicao(loginSchema), loginUsuario)
 
 rota.use(verificarUsuarioLogado)
-rota.get('/categoria', listarCategorias)
 rota.get('/usuario', detalharPerfilUsuarioLogado)
 rota.put('/usuario', validarRequisicao(usuarioSchema), editarUsuario)
 
