@@ -31,17 +31,31 @@ ___
 
 ## **Funcionalidades**
 
+### Usuários
 * [x] <a href="cadastro">Cadastrar usuário</a>
 * [x] <a href="login">Login de usuário</a>
 * [x] <a href="perfil">Buscar perfil do usuário</a>
-* [x] <a href="atualizar">Atualizar usuário</a>
-* [x] <a href= "listarCategoria">Listar categorias</a>
+* [x] <a href="atualizarUsuario">Atualizar usuário</a>
+
+### Produtos
+* [x] <a href="listarCategoria">Listar Categorias</a>
+* [x] <a href="cadastrarProduto">Cadastrar Produto</a>
+* [x] <a href="listarProdutos">Listar Produtos</a>
+* [x] <a href="atualizarProduto">Atualizar Produto</a>
+* [x] <a href="detalharProduto">Detalhar Produto por ID</a>
+* [x] <a href="excluirProduto">Excluir Produto por ID</a>
+
+### Clientes
+* [x] <a href="cadastrarCliente">Cadastrar Cliente</a>
+* [x] <a href="atualizarCliente">Atualizar Cliente</a>
+* [x] <a href="listarClientes">Listar Clientes</a>
+* [x] <a href="detalharCliente">Detalhar Cliente por ID</a>
 ___
 
 ## **Demonstração**
 [Link deploy](https://pdv-hunters.cyclic.app)
 
-__
+___
 
 ## **Testes realizados**
 
@@ -62,15 +76,13 @@ const cadastrarUsuario = async (req, res) => {
             nome,
             email,
             senha: senhaCriptografada
-        }).returning('*')
+        }).returning(['nome', 'email'])
 
-        if (!novoUsuario) {
+        if (!novoUsuario[0]) {
             return res.status(400).json({ mensagem: 'Não foi possível cadastrar o usuário, tente novamente.' })
         }
 
-        const { senha: _, ...dadosUsuario } = novoUsuario[0]
-
-        return res.status(201).json(dadosUsuario)
+        return res.status(201).json(novoUsuario[0])
     } catch (error) {
         console.log(error);
         return res.status(500).json({
@@ -81,10 +93,14 @@ const cadastrarUsuario = async (req, res) => {
 };
 ```
 Sucesso:
-![cadastro](./src//assets//cadastroUsuario.jpg)
+![cadastro](./src//assets//CadastroUsuario.jpg)
 
 Erro:
-![ErroCadastro](./src//assets//ErroCadastro.jpg)
+![ErroCadastro](./src//assets//ErroCadastroUsuario.jpg)
+
+Banco de Dados:
+![BdCadastroUsuario](./src//assets//BdCadastroUsuario.jpg)
+
 ___
 
 ### Login de usuário
@@ -129,10 +145,10 @@ const loginUsuario = async (req, res) => {
 };
 ```
 Sucesso:
-![login](./src//assets//loginUsuario.jpg)
+![login](./src//assets//LoginUsuario.jpg)
 
 Erro:
-![ErroLogin](./src//assets//ErroLogin.jpg)
+![ErroLogin](./src//assets//ErroLoginUsuario.jpg)
 ___
 
 ### Buscar perfil do usuário
@@ -143,10 +159,10 @@ const detalharPerfilUsuarioLogado = async (req, res) => {
 }
 ```
 Sucesso:
-![perfil](./src//assets//perfilUsuario.jpg)
+![perfil](./src//assets//PerfilUsuario.jpg)
 
 Erro:
-![ErroPerfil](./src//assets//ErroPerfil.jpg)
+![ErroPerfil](./src//assets//ErroPerfilUsuario.jpg)
 ___
 
 ### Atualizar usuário
@@ -182,11 +198,13 @@ const editarUsuario = async (req, res) => {
 }
 ```
 Sucesso:
-![atualizar](./src//assets//atualizarUsuario.jpg)
+![atualizar](./src//assets//AtualizarUsuario.jpg)
 
 Erro:
-![ErroAtualizar](./src//assets//ErroAtualizar.jpg)
+![ErroAtualizar](./src//assets//ErroAtualizarusuario.jpg)
 
+Banco de dados:
+![BdAtualizarUsuario](./src//assets//BdAtualizarusuario.jpg)
 ___
 
 ### Listar categorias
@@ -209,16 +227,595 @@ const listarCategorias = async (req, res) => {
 }
 ```
 Sucesso:
-![listarCategorias](./src//assets//listarCategorias.jpg)
+![listarCategorias](./src//assets//ListarCategoria.jpg)
+
+Banco de dados:
+![BdlistarCategorias](./src//assets//BdListarCategoria.jpg)
+___
+
+### Cadastrar produto
+
+```bash 
+const cadastrarProduto = async (req, res) => {
+    const { descricao, quantidade_estoque, valor, categoria_id } = req.body
+    try {
+        const categoria = await knex('categorias').where({ id: categoria_id }).first()
+
+        if (!categoria) {
+            return res.status(404).json({ mensagem: 'Não foi possível encontrar a categoria informada.' })
+        }
+
+        const produtoJaExiste = await knex('produtos').where({ descricao }).first()
+        if (produtoJaExiste) {
+            return res.status(400).json({ mensagem: 'Este produto já está cadastrado no banco de dados.' })
+        }
+
+        const novoProduto = await knex('produtos').insert({
+            descricao,
+            quantidade_estoque,
+            valor,
+            categoria_id
+        }).returning('*')
+
+        if (!novoProduto) {
+            return res.status(400).json({ mensagem: 'Não foi possível cadastrar o produto.' })
+        }
+
+        return res.json({ novoProduto: novoProduto[0] })
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            mensagem: 'Erro interno do servidor.'
+        })
+    }
+}
+```
+Sucesso:
+![CadastroProduto](./src//assets//CadastroProduto.jpg)
 
 Erro:
-![erroCategorias](./src//assets//ErroListarCategoria.jpg)
+![ErroCadastroProduto](./src//assets//ErroCadastroProduto.jpg)
+
+Banco de dados:
+![BdCadastroProduto](./src//assets//BdCadastroProduto.jpg)
+___
+
+### Listar produtos
+
+```bash 
+const listarProdutos = async (req, res) => {
+    const { categoria_id } = req.query
+    try {
+        if (categoria_id) {
+            const categoria = await knex('categorias').where({ id: categoria_id }).first()
+
+            if (!categoria) {
+                return res.status(404).json({ mensagem: 'Não foi possível encontrar a categoria informada.' })
+            }
+
+            const produtos = await knex('produtos').where({ categoria_id }).orderBy("id")
+            if (produtos.length < 1) {
+                return res.status(404).json({ mensagem: 'Não foi possível encontrar produtos utilizando a categoria informada.' })
+            }
+            return res.json(produtos)
+        }
+        const produtos = await knex('produtos').orderBy("id")
+        console.log(produtos);
+        return res.json(produtos)
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            mensagem: 'Erro interno do servidor.'
+        })
+    }
+}
+```
+Sucesso:
+![listarProdutos](./src//assets//ListarProdutos.jpg)
+
+Erro:
+![ErrolistarProdutos](./src//assets//ErroListarProdutos.jpg)
+
+Banco de dados:
+![BdListarProdutos](./src//assets//BdListarProdutos.jpg)
+
+___
+
+### Atualizar produto
+
+
+```bash 
+const editarProduto = async (req, res) => {
+    const { descricao, quantidade_estoque, valor, categoria_id } = req.body
+    const { id } = req.params
+
+    try {
+        const produto = await knex('produtos').where({ id }).first()
+
+        if (!produto) {
+            return res.status(404).json({ mensagem: 'Não foi possível encontrar o produto.' })
+        }
+
+        const categoria = await knex('categorias').where({ id: categoria_id }).first()
+
+        if (!categoria) {
+            return res.status(404).json({ mensagem: 'Não foi possível encontrar a categoria informada.' })
+        }
+
+        const produtoJaExiste = await knex('produtos').where({ descricao }).andWhere('id', '!=', id).first()
+
+        if (produtoJaExiste) {
+            return res.status(400).json({ mensagem: 'Este produto já está cadastrado no banco de dados.' })
+        }
+
+        const produtoAtualizado = await knex('produtos').update({
+            descricao,
+            quantidade_estoque,
+            valor,
+            categoria_id
+        }).where({ id }).returning('*')
+
+        if (!produtoAtualizado) {
+            return res.status(400).json({ mensagem: 'Não foi possível atualizar o produto.' })
+        }
+
+        return res.json({ produtoAtualizado: produtoAtualizado[0] })
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            mensagem: 'Erro interno do servidor.'
+        })
+    }
+}
+
+```
+Sucesso:
+![AtualizarProduto](./src//assets//AtualizarProduto.jpg)
+
+Erro:
+![ErroAtualizarProduto](./src//assets//ErroAtualizarProduto.jpg)
+
+Banco de dados:
+![BdAtualizarProduto](./src//assets//BdAtualizarProduto.jpg)
+
+___
+
+### Detalhar Produto por ID
+```bash 
+    const detalharProduto = async (req, res) => {
+    const { id } = req.params
+
+    try {
+        const produto = await knex('produtos').where({ id }).first()
+
+        if (!produto) {
+            return res.status(404).json({ mensagem: `Produto não foi encontrado.` })
+        }
+
+        return res.status(200).json(produto)
+    } catch (error) {
+        console.log(error)
+        return res.status(404).json({ mensagem: "Erro interno do servidor." })
+    }
+}
+```
+Sucesso:
+![DetalharProduto](./src//assets//DetalharProduto.jpg)
+
+Erro:
+![ErroDetalharProduto](./src//assets//ErroDetalharProduto.jpg)
+
+___
+
+### Excluir produto por ID
+```bash 
+    const excluirProduto = async (req, res) => {
+    const { id } = req.params
+
+    try {
+        const produtoDeletar = await knex('produtos').where({ id }).first()
+
+        if (!produtoDeletar) {
+            return res.status(404).json({ mensagem: `Produto não foi encontrado.` })
+        }
+
+        await knex('produtos').where({ id }).del()
+
+        return res.status(201).json({ produtoExcluido: produtoDeletar })
+    } catch (error) {
+        console.log(error)
+        return res.status(200).json({ mensagem: "Erro interno do servidor" })
+    }
+}
+```
+Sucesso:
+![ExcluirProduto](./src//assets//ExcluirProduto.jpg)
+
+Erro:
+![ErroExcluirProduto](./src//assets//ErroExcluirProduto.jpg)
+
+Banco de dados:
+![BdExcluirProduto](./src//assets//BdExcluirProduto.jpg)
+___
+
+### Cadastrar Cliente
+
+```bash 
+    const cadastrarCliente = async (req, res) => {
+  const { nome, email, cpf, cep, rua, numero, bairro, cidade, estado } = req.body
+
+  try {
+    const emailJaExiste = await knex('clientes').where({ email }).first()
+
+    if (emailJaExiste) {
+      return res.status(400).json({ mensagem: "Email já cadastrado." })
+    }
+
+    const cpfJaExiste = await knex('clientes').where({ cpf }).first()
+
+    if (cpfJaExiste) {
+      return res.status(400).json({ mensagem: "CPF já cadastrado." })
+    }
+
+    const novoCliente = {
+      nome,
+      email,
+      cpf,
+      cep,
+      rua, 
+      numero,
+      bairro,
+      cidade,
+      estado
+    }
+
+    await knex('clientes').insert(novoCliente)
+
+    return res.status(200).json({ novoCliente })
+
+  } catch (error) {
+    return res.status(500).json({ mensagem: "Erro interno do servidor." })
+  }
+};
+```
+Sucesso:
+![CadastrarCliente](./src//assets//CadastrarCliente.jpg)
+
+Erro:
+![ErroCadastrarCliente](./src//assets//ErroCadastrarCliente.jpg)
+
+Banco de dados:
+![BdCadastrarCliente](./src//assets//BdCadastrarCliente.jpg)
+
+___
+
+### Atualizar Cliente
+```bash 
+    const editarCliente = async (req, res) => {
+  const {nome, email, cpf, cep, rua, numero, bairro, cidade, estado} = req.body;
+  const {id} = req.params;
+
+  try {
+    const cliente = await knex('clientes').where({ id }).first()
+
+    if(!cliente){
+      return res.status(404).json({ mensagem: 'Cliente não encontrado.' })
+    }
+
+    const cpfJaExiste = await knex('clientes').where({cpf}).whereNot('id',id).first()
+    const emailJaExiste = await knex('clientes').where({email}).whereNot('id',id).first()
+
+    if(cpfJaExiste){
+      return res.status(400).json({ mensagem: 'CPF já está cadastrado.' })
+    }
+
+    if(emailJaExiste){
+      return res.status(400).json({ mensagem: 'Email já está cadastrado.' })
+    }
+
+    const clienteAtualizado = await knex('clientes').update({
+      nome,
+      email,
+      cpf,
+      cep,
+      rua,
+      numero,
+      bairro,
+      cidade,
+      estado
+    }).where({id}).returning('*')
+
+    return res.json({clienteAtualizado: clienteAtualizado[0]})
+
+  } catch (error) {
+    return res.status(500).json({ mensagem: "Erro interno do servidor." })
+  }
+};
+```
+Sucesso:
+![AtualizarCliente](./src//assets//AtualizarCliente.jpg)
+
+Erro:
+![ErroAtualizarCliente](./src//assets//ErroAtualizarCliente.jpg)
+
+Banco de dados:
+![BdAtualizarCliente](./src//assets//BdAtualizarCliente.jpg)
+___
+
+### Listar Clientes
+```bash 
+    const listarClientes = async (req, res) => {
+  
+  try {
+    const clientes = await knex('clientes')
+    
+    if(!clientes){
+      return res.status(404).json({ mensagem: 'Cliente(s) nao encontrado(s).' })
+    }
+
+    return res.json(clientes)
+  } catch (error) {
+    return res.status(500).json({ mensagem: 'Erro interno do servidor.' })
+  }
+
+};
+```
+Sucesso:
+![ListarClientes](./src//assets//ListarClientes.jpg)
+
+Erro:
+![ErroListarClientes](./src//assets//ErroListarClientes.jpg)
+
+Banco de dados:
+![BdListarClientes](./src//assets//BdListarClientes.jpg)
+___
+
+### Detalhar Cliente por ID
+```bash 
+    const detalharCliente = async (req, res) => {
+  const {id} = req.params;
+
+  try {
+    const cliente = await knex('clientes').where({ id }).first()
+
+    if(!cliente){
+      return res.status(404).json({mensagem: 'Cliente não encontrado.'})
+    }
+
+    return res.json(cliente)
+    
+  } catch (error) {
+    return res.status(500).json({ mensagem: "Erro interno do servidor." })
+  }
+};
+```
+Sucesso:
+![DetalharCliente](./src//assets//DetalharCliente.jpg)
+
+Erro:
+![ErroDetalharCliente](./src//assets//ErroDetalharCliente.jpg)
 ___
 
 ## **Autores**
-- [Igor André](https://www.linkedin.com/in/igor-padua/)
-- [Helingston Pereira](https://www.linkedin.com/in/helingston/)
-- [Michael Cruz](https://www.linkedin.com/in/michael-vpcruz/)
-- [Victor Freitas](https://www.linkedin.com/in/victor-freitas-5986a333/)
-- [Vinícius Gomes](https://www.linkedin.com/in/vini-gomes/)
+
+<div style="display: flex; justify-content: space-around;">
+
+  <div style="text-align: center;">
+    <img height="80px" src="./src/assets/profileIgor.jpeg" alt="Igor André">
+    <br>
+    <a href="https://www.linkedin.com/in/igor-padua/">Igor André</a>
+  </div>
+
+  <div style="text-align: center;">
+    <img height="80px" src="./src/assets/profileHelingston.jpeg" alt="Helingston Pereira">
+    <br>
+    <a href="https://www.linkedin.com/in/helingston/">Helingston Pereira</a>
+  </div>
+
+  <div style="text-align: center;">
+    <img height="80px" src="./src/assets/profileMichael.jpeg" alt="Michael Cruz">
+    <br>
+    <a href="https://www.linkedin.com/in/michael-vpcruz/">Michael Cruz</a>
+  </div>
+
+  <div style="text-align: center;">
+    <img height="80px" src="./src/assets/profileVictor.jpeg" alt="Victor Freitas">
+    <br>
+    <a href="https://www.linkedin.com/in/victor-freitas-5986a333/">Victor Freitas</a>
+  </div>
+
+  <div style="text-align: center;">
+    <img height="80px" src="./src/assets/profileVini.jpeg" alt="Vinícius Gomes">
+    <br>
+    <a href="https://www.linkedin.com/in/vini-gomes/">Vinícius Gomes</a>
+  </div>
+
+</div>
+
+<details>
+<summary>2ª Sprint</summary>
+<br>
+
+<details>
+<summary><b>Banco de Dados</b></summary>
+<br>
+
+Crie as seguintes tabelas e colunas abaixo: 
+
+**ATENÇÃO! Os nomes das tabelas e das colunas a serem criados devem seguir exatamente os nomes listados abaixo.**
+
+-   produtos
+    -   id
+    -   descricao
+    -   quantidade_estoque
+    -   valor
+    -   categoria_id
+-   clientes
+    -   id
+    -   nome
+    -   email (campo único)
+    -   cpf (campo único) 
+    -   cep 
+    -   rua
+    -   numero
+    -   bairro
+    -   cidade
+    -   estado
+
+</details>
+
+---
+
+## **ATENÇÃO**: Todas as funcionalidades (endpoints) a seguir, a partir desse ponto, deverão exigir o token de autenticação do usuário logado, recebendo no header com o formato Bearer Token. Portanto, em cada funcionalidade será necessário validar o token informado.
+
+---
+
+<details>
+<summary><b>Cadastrar Produto</b></summary>
+
+#### `POST` `/produto`
+
+Essa é a rota que permite o usuário logado cadastrar um novo produto no sistema.
+
+Critérios de aceite:
+
+    -   Validar os campos obrigatórios:
+        -   descricao
+        -   quantidade_estoque
+        -   valor
+        -   categoria_id
+    -   A categoria informada na qual o produto será vinculado deverá existir.
+
+</details>
+
+<details>
+<summary><b>Editar dados do produto</b></summary>
+
+#### `PUT` `/produto/:id`
+
+Essa é a rota que permite o usuário logado a atualizar as informações de um produto cadastrado.
+
+Critérios de aceite:
+
+    -   Validar se existe produto para o id enviado como parâmetro na rota.
+    -   Validar os campos obrigatórios:
+        -   descricao
+        -   quantidade_estoque
+        -   valor
+        -   categoria_id
+    -   A categoria informada na qual o produto será vinculado deverá existir.
+
+</details>
+
+<details>
+<summary><b>Listar Produtos</b></summary>
+
+#### `GET` `/produto`
+
+Essa é a rota que será chamada quando o usuário logado quiser listar todos os produtos cadastrados.
+
+Deveremos incluir um parâmetro do tipo query **categoria_id** para que seja possível consultar produtos por categorias, de modo, que serão filtrados de acordo com o id de uma categoria.
+
+Critérios de aceite:
+
+    - Caso seja enviado o parâmetro do tipo query **categoria_id**, filtrar os produtos de acordo com a categoria, caso o id de categoria informada exista.
+    - Caso não seja informado o parâmetro do tipo query **categoria_id** todos os produtos cadastrados deverão ser retornados.
+
+</details>
+
+<details>
+<summary><b>Detalhar Produto</b></summary>
+
+#### `GET` `/produto/:id`
+
+Essa é a rota que permite o usuário logado obter um de seus produtos cadastrados.  
+
+Critérios de aceite:
+
+    -   Validar se existe produto para o id enviado como parâmetro na rota.
+
+</details>
+
+<details>
+<summary><b>Excluir Produto por ID</b></summary>
+
+#### `DELETE` `/produto/:id`
+
+Essa é a rota que será chamada quando o usuário logado quiser excluir um de seus produtos cadastrados.  
+
+Critérios de aceite:
+
+    -   Validar se existe produto para o id enviado como parâmetro na rota.
+
+</details>
+
+<details>
+<summary><b>Cadastrar Cliente</b></summary>
+
+#### `POST` `/cliente`
+
+Essa é a rota que permite usuário logado cadastrar um novo cliente no sistema.
+
+Critérios de aceite:
+
+    -   Validar os campos obrigatórios:
+        -   nome
+        -   email
+        -   cpf
+    -   O campo e-mail no banco de dados deve ser único para cada registro, não permitindo dois clientes possuírem o mesmo e-mail.
+    -   O campo cpf no banco de dados deve ser único para cada registro, não permitindo dois clientes possuírem o mesmo cpf.
+
+</details>
+
+<details>
+<summary><b>Editar dados do cliente</b></summary>
+
+#### `PUT` `/cliente/:id`
+
+Essa é a rota que permite o usuário realizar atualização de um cliente cadastrado.
+
+Critérios de aceite:
+
+    -   Validar se existe cliente para o id enviado como parâmetro na rota.
+    -   Validar os campos obrigatórios:
+        -   nome
+        -   email
+        -   cpf
+    -   O campo e-mail no banco de dados deve ser único para cada registro, não permitindo dois clientes possuírem o mesmo e-mail.
+    -   O campo cpf no banco de dados deve ser único para cada registro, não permitindo dois clientes possuírem o mesmo cpf.
+
+</details>
+
+<details>
+<summary><b>Listar Clientes</b></summary>
+
+#### `GET` `/cliente`
+
+Essa é a rota que será chamada quando o usuário logado quiser listar todos os clientes cadastrados.
+
+</details>
+
+<details>
+<summary><b>Detalhar Cliente</b></summary>
+
+#### `GET` `/cliente/:id`
+
+Essa é a rota que será chamada quando o usuário logado quiser obter um de seus clientes cadastrados.  
+
+Critérios de aceite:
+
+    -   Validar se existe cliente para o id enviado como parâmetro na rota.
+
+</details>
+
+</details>
+
+---
+
+
+
+
 
