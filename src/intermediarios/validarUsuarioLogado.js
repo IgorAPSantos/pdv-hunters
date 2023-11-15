@@ -16,7 +16,7 @@ const verificarUsuarioLogado = async (req, res, next) => {
 
         const { id } = jwt.verify(token, process.env.JWT_SENHA)
 
-        const usuario = await knex('usuarios').where({ id }).first()
+        const usuario = await knex('usuarios').select('*').where({ id }).first()
 
 
         if (!usuario) {

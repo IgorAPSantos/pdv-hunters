@@ -6,7 +6,7 @@ const cadastrarUsuario = async (req, res) => {
     try {
         const emailJaExiste = await knex('usuarios').where({ email }).first()
         if (emailJaExiste) {
-            return res.status(400).json({ mensagem: 'Este email já está cadastrado.' })
+            return res.status(400).json({ mensagem: 'Este email já foi cadastrado.' })
         }
         const senhaCriptografada = await bcrypt.hash(senha, 10)
 
@@ -42,7 +42,7 @@ const editarUsuario = async (req, res) => {
         const emailJaExiste = await knex('usuarios').where({ email }).andWhere('id', '!=', id).first()
 
         if (emailJaExiste) {
-            return res.status(400).json({ mensagem: "Este email ja existe no banco de dados" })
+            return res.status(400).json({ mensagem: "Este email já foi cadastrado." })
         }
 
         const senhaCriptografada = await bcrypt.hash(senha, 10)
@@ -50,16 +50,16 @@ const editarUsuario = async (req, res) => {
         const usuarioEditado = await knex('usuarios').update({ nome, email, senha: senhaCriptografada }).where({ id }).returning(['id', 'nome', 'email'])
 
         if (!usuarioEditado[0]) {
-            return res.status(400).json({ mensagem: "Não foi possível atualizar o usuário" })
+            return res.status(400).json({ mensagem: "Não foi possível atualizar o usuário." })
         }
 
-        return res.status(200).json({ atuliazadoComSucesso: usuarioEditado[0] })
+        return res.status(200).json({ atualizadoComSucesso: usuarioEditado[0] })
 
     }
 
     catch (error) {
         console.log(error)
-        return res.status(500).json({ mensagem: "Erro interno do servidor" })
+        return res.status(500).json({ mensagem: "Erro interno do servidor." })
     }
 }
 

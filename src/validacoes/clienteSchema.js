@@ -1,6 +1,6 @@
 const joi = require('joi')
 
-const usuarioSchema = joi.object({ 
+const clienteSchema = joi.object({
     nome: joi.string().min(3).max(100).pattern(new RegExp(/^[a-zA-Z]+$/
     )).messages({
         'string.empty': 'O campo nome é obrigatório',
@@ -16,14 +16,14 @@ const usuarioSchema = joi.object({
         'string.email': 'Informe um email válido.',
         'string.base': 'Informe um email válido.'
     }),
-    senha: joi.string().min(5).max(10).required().messages({
-        'any.required': 'O campo senha é obrigatório.',
-        'string.empty': 'O campo senha é obrigatório.',
-        'string.base': 'Informe uma senha válido.',
-        'string.min': 'A senha deve ter no mínimo 5 caracteres.',
-        'string.max': 'A senha deve ter no máximo 10 caracteres.'
+    cpf: joi.string().pattern(/^[0-9]{11}$/).required().messages({
+        'any.required': 'O campo cpf é obrigatório.',
+        'string.empty': 'O campo cpf é obrigatório.',
+        'string.pattern.base': 'Informe um cpf válido.',
+        'string.base': 'Informe um cpf válido.'
+
     })
 
 });
 
-module.exports = usuarioSchema
+module.exports = clienteSchema

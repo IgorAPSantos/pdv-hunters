@@ -8,10 +8,12 @@ const loginSchema = joi.object({
         'string.base': 'Informe um email válido.'
     }),
 
-    senha: joi.string().required().messages({
+    senha: joi.string().min(5).max(10).required().messages({
         'any.required': 'O campo senha é obrigatório.',
         'string.empty': 'O campo senha é obrigatório.',
-        'string.base': 'Informe uma senha válido.'
+        'string.base': 'Informe uma senha válido.',
+        'string.min': 'A senha deve ter no mínimo 5 caracteres.',
+        'string.max': 'A senha deve ter no máximo 10 caracteres.'
     })
 });
 
