@@ -1,14 +1,14 @@
 const joi = require('joi')
 
 const usuarioSchema = joi.object({ 
-    nome: joi.string().min(3).max(100).pattern(new RegExp(/^[a-zA-Z]+$/
-    )).messages({
+    nome: joi.string().trim().min(3).max(100).pattern(/^[a-zA-Z]+(?:\s[a-zA-Z]+)*$/
+    ).messages({
         'string.empty': 'O campo nome é obrigatório',
         'any.required': 'O campo nome é obrigatório',
         'string.base': 'Informe um nome válido.',
         'string.min': 'O nome deve ter no mínimo 3 caracteres.',
         'string.max': 'O nome deve ter no máximo 100 caracteres.',
-        'string.pattern.base': 'Informe um nome válido.',
+        'string.pattern.base': 'Informe um nome válido.'
     }),
     email: joi.string().email().required().messages({
         'string.empty': 'O campo email é obrigatório',

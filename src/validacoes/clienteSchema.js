@@ -1,8 +1,8 @@
 const joi = require('joi')
 
 const clienteSchema = joi.object({
-    nome: joi.string().min(3).max(100).pattern(new RegExp(/^[a-zA-Z]+$/
-    )).messages({
+    nome: joi.string().trim().min(3).max(100).pattern(/^[a-zA-Z]+(?:\s[a-zA-Z]+)*$/
+    ).messages({
         'string.empty': 'O campo nome é obrigatório',
         'any.required': 'O campo nome é obrigatório',
         'string.base': 'Informe um nome válido.',

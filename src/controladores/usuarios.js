@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt')
 
 const cadastrarUsuario = async (req, res) => {
     const { nome, email, senha } = req.body
+
     try {
         const emailJaExiste = await knex('usuarios').where({ email }).first()
         if (emailJaExiste) {
@@ -11,7 +12,7 @@ const cadastrarUsuario = async (req, res) => {
         const senhaCriptografada = await bcrypt.hash(senha, 10)
 
         const novoUsuario = await knex('usuarios').insert({
-            nome,
+            nome: nome.trim(),
             email,
             senha: senhaCriptografada
         }).returning(['nome', 'email'])
@@ -47,7 +48,7 @@ const editarUsuario = async (req, res) => {
 
         const senhaCriptografada = await bcrypt.hash(senha, 10)
 
-        const usuarioEditado = await knex('usuarios').update({ nome, email, senha: senhaCriptografada }).where({ id }).returning(['id', 'nome', 'email'])
+        const usuarioEditado = await knex('usuarios').update({ nome: nome.trim(), email, senha: senhaCriptografada }).where({ id }).returning(['id', 'nome', 'email'])
 
         if (!usuarioEditado[0]) {
             return res.status(400).json({ mensagem: "Não foi possível atualizar o usuário." })

@@ -17,7 +17,7 @@ const cadastrarCliente = async (req, res) => {
     }
 
     const novoCliente = {
-      nome,
+      nome: nome.trim(),
       email,
       cpf
     }
@@ -54,7 +54,7 @@ const editarCliente = async (req, res) => {
     }
 
     const clienteAtualizado = await knex('clientes').update({
-      nome,
+      nome: nome.trim(),
       email,
       cpf
     }).where({ id }).returning('*')
