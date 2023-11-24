@@ -74,14 +74,15 @@ const cadastrarPedido = async (req, res) => {
 }
 
 const listarPedidos = async (req, res) => {
-  const { cliente_id } = req.query
+  let { cliente_id } = req.query
 
   try {
+    cliente_id = cliente_id ? cliente_id : 0
     const pedidosCliente = await knex('pedidos').where({ cliente_id })
 
     if (pedidosCliente.length === 0) {
       const pedidos = await knex('pedidos')
-      return res.status(404).json(pedidos)
+      return res.status(200).json(pedidos)
     }
 
     const resposta = []
@@ -93,7 +94,7 @@ const listarPedidos = async (req, res) => {
       resposta.push({ pedido: pedidosCliente[i], pedido_produtos: pedidoProdutos })
     }
     return res.status(200).json(resposta)
-
+ 
   } catch (error) {
     console.log(error)
     return res.status(500).json({ mensagem: "Erro interno do servidor" })
