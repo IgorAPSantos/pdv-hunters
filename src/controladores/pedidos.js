@@ -1,5 +1,6 @@
 const knex = require('../conexoes/bancodedados')
 const emailSender = require('../conexoes/nodemailer')
+const ejs = require('ejs');
 
 const cadastrarPedido = async (req, res) => {
   const { cliente_id, observacao, pedido_produtos } = req.body
@@ -12,16 +13,15 @@ const cadastrarPedido = async (req, res) => {
     }
 
     const produtos = []
-    let valorTotal = 0
+    let valorTotal = 0  
 
-    for (let i = 0; i < pedido_produtos.length; i++) {
-      let produto = pedido_produtos[i]
-
+    for (let produto of pedido_produtos) {
+ 
       const produtoExiste = await knex('produtos').where({ id: produto.produto_id }).first()
 
-      if (!produtoExiste) {
+      if (!produtoExiste) {  
         return res.status(404).json({ mensagem: `O produto de id ${produto.produto_id} nao existe` })
-      }
+      } 
 
       if (produtoExiste.quantidade_estoque < produto.quantidade_produto) {
         return res.status(400).json({ mensagem: `O pedido não foi realizado pois há apenas ${produtoExiste.quantidade_estoque} produto(s) no estoque do produto de id ${produtoExiste.id}.` })
@@ -47,7 +47,22 @@ const cadastrarPedido = async (req, res) => {
       corpoEmail: 'Seu pedido foi cadastrado com sucesso!'
     }
 
-    emailSender(process.env.MAIL_SENDER, clienteExiste.email, email.assunto, email.corpoEmail)
+    const path = __dirname.replace('\controladores', '') + '/views/free-order-receipt.ejs'
+
+    let somaTotal = 0
+    for (let i = 0; i < produtos.length; i++) { 
+      somaTotal += produtos[i].valor
+    }
+    const dadosUsuario = {
+      nome: clienteExiste.nome,
+      id: pedido[0].id,
+      produtos,
+      somaTotal: (somaTotal / 100).toFixed(2)
+    }
+    
+    const data = await ejs.renderFile(path, dadosUsuario);
+
+    emailSender(process.env.MAIL_SENDER, clienteExiste.email, email.assunto, data)
       .catch(error => console.log(error))
 
     return res.status(200).json({ mensagem: "Pedido cadastrado com sucesso" })
