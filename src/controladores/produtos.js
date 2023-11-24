@@ -1,10 +1,11 @@
 const knex = require('../conexoes/bancodedados')
+const s3 = require('../conexoes/s3')
 
 const cadastrarProduto = async (req, res) => {
     const { descricao, quantidade_estoque, valor, categoria_id } = req.body
+    const { file } = req
     try {
         const categoria = await knex('categorias').where({ id: categoria_id }).first()
-
         if (!categoria) {
             return res.status(404).json({ mensagem: 'Não foi possível encontrar a categoria informada.' })
         }
@@ -14,13 +15,23 @@ const cadastrarProduto = async (req, res) => {
             return res.status(400).json({ mensagem: 'Este produto já está cadastrado.' })
         }
 
-        const novoProduto = await knex('produtos').insert({
+        const produto = {
             descricao,
             quantidade_estoque,
             valor,
             categoria_id
-        }).returning('*')
+        }
 
+        if (file) {
+            const novaImagem = await s3.uploadFile(
+                `imagens/${file.originalname}`,
+                file.buffer,
+                file.mimetype
+            )
+            produto.produto_imagem = novaImagem.url
+        }
+
+        const novoProduto = await knex('produtos').insert(produto).returning('*')
         if (!novoProduto) {
             return res.status(400).json({ mensagem: 'Não foi possível cadastrar o produto.' })
         }
@@ -38,6 +49,7 @@ const cadastrarProduto = async (req, res) => {
 const editarProduto = async (req, res) => {
     const { descricao, quantidade_estoque, valor, categoria_id } = req.body
     const { id } = req.params
+    const { file } = req
 
     try {
         const produto = await knex('produtos').where({ id }).first()
@@ -57,13 +69,22 @@ const editarProduto = async (req, res) => {
         if (produtoJaExiste) {
             return res.status(400).json({ mensagem: 'Este produto já está cadastrado.' })
         }
-
-        const produtoAtualizado = await knex('produtos').update({
+        const produtoModelo = {
             descricao,
             quantidade_estoque,
             valor,
             categoria_id
-        }).where({ id }).returning('*')
+        }
+
+        if (file) {
+            const novaImagem = await s3.uploadFile(
+                `imagens/${file.originalname}`,
+                file.buffer,
+                file.mimetype
+            )
+            produtoModelo.produto_imagem = novaImagem.url
+        }
+        const produtoAtualizado = await knex('produtos').update(produtoModelo).where({ id }).returning('*')
 
         if (!produtoAtualizado) {
             return res.status(400).json({ mensagem: 'Não foi possível atualizar o produto.' })
@@ -135,9 +156,23 @@ const excluirProduto = async (req, res) => {
             return res.status(404).json({ mensagem: `Produto não foi encontrado.` })
         }
 
+        const produtoEmPedido = await knex('pedido_produtos').where({ produto_id: id }).first()
+
+        if (produtoEmPedido) {
+            return res.status(400).json({ mensagem: `Não foi posível excluir o produto pois o mesmo se encontra em um pedido.` })
+        }
+        const { produto_imagem, ...produtoDel } = produtoDeletar
+
+        if (produto_imagem != null) {
+            const imagens = await s3.listFiles()
+            const imagem = imagens.find(img => img.url === produto_imagem)
+            await s3.deleteFile(imagem.path)
+        }
+
         await knex('produtos').where({ id }).del()
 
-        return res.status(201).json({ produtoExcluido: produtoDeletar })
+        return res.status(201).json({ produtoExcluido: produtoDel })
+
     } catch (error) {
         console.log(error)
         return res.status(200).json({ mensagem: "Erro interno do servidor" })

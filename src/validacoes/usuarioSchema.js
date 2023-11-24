@@ -1,7 +1,10 @@
 const joi = require('joi')
 
+// /^[a-zA-Záéíóúâêîôûàèìòùãõç]+(?:\s[a-zA-Záéíóúâêîôûàèìòùãõç]+)*$/
+// /^[a-zA-Z]+(?:\s[a-zA-Z]+)*$/
+
 const usuarioSchema = joi.object({ 
-    nome: joi.string().trim().min(3).max(100).pattern(/^[a-zA-Z]+(?:\s[a-zA-Z]+)*$/
+    nome: joi.string().trim().min(3).max(100).pattern(/^[a-zA-ZáéíóúâêîôûàèìòùãõçÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÃÕÇ]+(?:\s[a-zA-ZáéíóúâêîôûàèìòùãõçÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÃÕÇ]+)*$/
     ).messages({
         'string.empty': 'O campo nome é obrigatório',
         'any.required': 'O campo nome é obrigatório',
@@ -16,7 +19,7 @@ const usuarioSchema = joi.object({
         'string.email': 'Informe um email válido.',
         'string.base': 'Informe um email válido.'
     }),
-    senha: joi.string().min(5).max(10).required().messages({
+    senha: joi.string().min(5).max(20).required().messages({
         'any.required': 'O campo senha é obrigatório.',
         'string.empty': 'O campo senha é obrigatório.',
         'string.base': 'Informe uma senha válido.',
